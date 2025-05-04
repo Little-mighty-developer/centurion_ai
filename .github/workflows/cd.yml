@@ -1,0 +1,53 @@
+name: CD
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+
+jobs:
+  deploy-staging:
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Deploy to staging
+        run: |
+          # Add your staging deployment steps here
+          echo "Deploying to staging environment..."
+          
+  deploy-production:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    needs: deploy-staging
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Deploy to production
+        run: |
+          # Add your production deployment steps here
+          echo "Deploying to production environment..." 
