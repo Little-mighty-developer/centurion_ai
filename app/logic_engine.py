@@ -1,4 +1,7 @@
 from typing import Dict, List, Optional
+import os
+import openai
+import requests
 
 class WorkoutPlan:
     def __init__(self, exercises: List[str], duration: str, intensity: str, notes: Optional[str] = None):
@@ -73,3 +76,57 @@ def generate_plan(goal: str, mood: str) -> Dict:
         intensity="light",
         notes="Listen to your body and adjust intensity as needed"
     ).to_dict()
+
+def generate_ollama_plan(goal: str, mood: str, model: str = "llama3") -> str:
+    """
+    Generate a workout plan using Ollama's local LLM API.
+    """
+    prompt = (
+        f"You are a helpful fitness assistant. "
+        f"Given the goal: '{goal}' and the mood: '{mood}', "
+        f"generate a concise, actionable workout plan. "
+        f"Be specific, safe, and motivating."
+    )
+    try:
+        response = requests.post(
+            "http://localhost:11434/api/chat",
+            json={
+                "model": model,
+                "messages": [{"role": "user", "content": prompt}],
+                "stream": False
+            },
+            timeout=30
+        )
+        response.raise_for_status()
+        data = response.json()
+        return data["message"]["content"].strip()
+    except Exception as e:
+        raise RuntimeError(f"Ollama API error: {e}")
+
+def generate_ai_plan(goal: str, mood: str) -> str:
+    """
+    Generate a workout plan using the selected AI provider (OpenAI or Ollama).
+    """
+    provider = os.getenv("AI_PROVIDER", "openai").lower()
+    if provider == "ollama":
+        return generate_ollama_plan(goal, mood)
+    else:
+        # Default to OpenAI
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise RuntimeError("OPENAI_API_KEY environment variable not set.")
+        openai.api_key = api_key
+
+        prompt = (
+            f"You are a helpful fitness assistant. "
+            f"Given the goal: '{goal}' and the mood: '{mood}', "
+            f"generate a concise, actionable workout plan. "
+            f"Be specific, safe, and motivating."
+        )
+        response = openai.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=250,
+            temperature=0.7,
+        )
+        return response.choices[0].message.content.strip()
