@@ -1,0 +1,21 @@
+name: Branch Protection
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  protect-main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check branch protection
+        run: |
+          # This is a placeholder for branch protection rules
+          # These rules should be configured in GitHub repository settings
+          echo "Branch protection rules should be configured in GitHub repository settings"
+          
+          # Required checks:
+          # 1. CI tests must pass
+          # 2. At least one review required
+          # 3. No direct pushes to main
+          # 4. Require status checks to pass before merging 
